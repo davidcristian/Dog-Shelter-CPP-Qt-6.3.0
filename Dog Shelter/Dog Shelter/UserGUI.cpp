@@ -12,13 +12,19 @@
 UserGUI::UserGUI(Service& serv, QWidget* modeSelector, QWidget* parent) : QWidget{ parent }, modeSelector{ modeSelector }, serv{ serv }
 {
 	this->networkManager = new QNetworkAccessManager{ this };
-	
+	this->images = new std::unordered_map<QString, QPixmap>();
+
 	this->adopted = this->serv.getAdoptionList();
 	this->tableModel = new AdoptionTableModel{ this->adopted };
 
 	this->initGUI();
 	this->center();
 	this->connectSignalsAndSlots();
+}
+
+UserGUI::~UserGUI()
+{
+	delete this->images;
 }
 
 void UserGUI::initGUI()
@@ -158,7 +164,7 @@ void UserGUI::initGUI()
 	this->picturesTableView->setModel(this->tableModel);
 
 	// set the custom delegate
-	this->picturesTableView->setItemDelegate(new PictureDelegate{ this->tableModel });
+	this->picturesTableView->setItemDelegate(new PictureDelegate{ this->tableModel, this->images });
 
 	// hide the vertical header
 	this->picturesTableView->verticalHeader()->hide();
@@ -238,15 +244,26 @@ void UserGUI::loadCurrentDog()
 	this->dogNameEdit->setText(QString::fromStdString(dog.getName()));
 	this->dogBreedEdit->setText(QString::fromStdString(dog.getBreed()));
 	this->dogAgeEdit->setText(QString::fromStdString(std::to_string(dog.getAge())));
-	this->loadImage(dog.getPhotohraph());
+
+	QString photograph = QString::fromStdString(dog.getPhotohraph());
+
+	if (this->images->find(photograph) != this->images->end())
+	{
+		QPixmap pixmap = this->images->at(photograph);
+		this->dogImage->setPixmap(pixmap);
+	}
+	else
+	{
+		this->loadImage(photograph);
+	}
 
 	//std::string command = "start ";
 	//system(command.append(dog.getPhotohraph()).c_str());
 }
 
-void UserGUI::loadImage(const std::string& imageURL)
+void UserGUI::loadImage(const QString& imageURL)
 {
-	QUrl url{ QString::fromStdString(imageURL) };
+	QUrl url{ imageURL };
 	this->networkManager->get(QNetworkRequest(url));
 }
 
@@ -325,11 +342,10 @@ void UserGUI::stopShowingDogs()
 	this->currentIndex = -1;
 	this->dogsToShow.getDogs().clear();
 
-	QImage image{ IMAGE_WIDTH, IMAGE_HEIGHT, QImage::Format::Format_ARGB32 };
+	QPixmap image{ IMAGE_WIDTH, IMAGE_HEIGHT };
 	image.fill(Qt::white);
 
-	this->dogImage->clear();
-	this->dogImage->setPixmap(QPixmap::fromImage(image));
+	this->dogImage->setPixmap(image);
 
 	this->dogNameEdit->clear();
 	this->dogBreedEdit->clear();
@@ -497,8 +513,10 @@ void UserGUI::receivedReply(QNetworkReply* reply)
 		}
 	}
 
-	this->dogImage->clear();
-	this->dogImage->setPixmap(QPixmap::fromImage(image));
+	QPixmap pixmap = QPixmap::fromImage(image);
+
+	this->images->operator[](reply->url().toString()) = pixmap;
+	this->dogImage->setPixmap(pixmap);
 
 	reply->deleteLater();
 }

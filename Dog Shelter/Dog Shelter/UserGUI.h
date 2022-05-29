@@ -8,6 +8,7 @@
 #include <QTabWidget>
 #include <QTableView>
 #include <QShortcut>
+#include <unordered_map>
 #include "AdoptionTableModel.h"
 #include "Service.h"
 #include "AdoptionList.h"
@@ -23,13 +24,14 @@ class UserGUI : public QWidget
 
 public:
 	UserGUI(Service& serv, QWidget* modeSelector, QWidget* parent = Q_NULLPTR);
-	~UserGUI() = default;
+	~UserGUI();
 
 private:
 	Service& serv;
 	QWidget* modeSelector;
 	QNetworkAccessManager* networkManager;
-	
+	std::unordered_map<QString, QPixmap>* images;
+
 	std::vector<std::unique_ptr<Action>> undoStack;
 	std::vector<std::unique_ptr<Action>> redoStack;
 
@@ -70,7 +72,7 @@ private:
 	void adoptButtonHandler();
 
 	void loadCurrentDog();
-	void loadImage(const std::string& imageURL);
+	void loadImage(const QString& imageURL);
 
 signals:
 	void prepareAdoptionSignal();

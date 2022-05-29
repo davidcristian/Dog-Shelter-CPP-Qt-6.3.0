@@ -10,7 +10,7 @@ private:
 
 public:
 	AdoptionTableModel(AdoptionList* adoptionList, QObject* parent = Q_NULLPTR);
-	~AdoptionTableModel();
+	~AdoptionTableModel() = default;
 
 	// number of rows
 	int rowCount(const QModelIndex& parent = QModelIndex{}) const override;

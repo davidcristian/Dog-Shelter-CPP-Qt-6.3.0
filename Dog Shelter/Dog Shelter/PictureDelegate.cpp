@@ -3,9 +3,11 @@
 #include "PictureDelegate.h"
 #include "Dog.h"
 
-PictureDelegate::PictureDelegate(AdoptionTableModel* model, QWidget* parent) : QStyledItemDelegate{ parent }, model{ model }
+PictureDelegate::PictureDelegate(AdoptionTableModel* model, std::unordered_map<QString, QPixmap>* images, QWidget* parent) : QStyledItemDelegate{ parent }, model{ model }
 {
+	this->images = images;
 	this->networkManager = new QNetworkAccessManager{ this };
+	
 	QObject::connect(this->networkManager, &QNetworkAccessManager::finished, this, &PictureDelegate::receivedReply);
 }
 
@@ -23,9 +25,9 @@ void PictureDelegate::paint(QPainter* painter, const QStyleOptionViewItem& optio
 	
 	QString photograph = index.model()->data(index, Qt::EditRole).toString();
 
-	if (this->images.find(photograph) != this->images.end())
+	if (this->images->find(photograph) != this->images->end())
 	{
-		QPixmap pixmap = this->images.at(photograph);
+		QPixmap pixmap = this->images->at(photograph);
 		painter->drawPixmap(option.rect, pixmap);
 	}
 	else
@@ -51,11 +53,6 @@ QSize PictureDelegate::sizeHint(const QStyleOptionViewItem& option, const QModel
 	return QStyledItemDelegate::sizeHint(option, index);
 }
 
-PictureDelegate::~PictureDelegate()
-{
-	delete this->networkManager;
-}
-
 void PictureDelegate::receivedReply(QNetworkReply* reply)
 {
 	QPixmap pixmap{};
@@ -73,7 +70,7 @@ void PictureDelegate::receivedReply(QNetworkReply* reply)
 		}
 	}
 
-	this->images[reply->url().toString()] = pixmap;
+	this->images->operator[](reply->url().toString()) = pixmap;
 	emit this->model->layoutChanged();
 
 	reply->deleteLater();

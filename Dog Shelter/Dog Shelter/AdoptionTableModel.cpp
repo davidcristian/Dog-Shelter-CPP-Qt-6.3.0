@@ -3,7 +3,6 @@
 #include "AdoptionTableModel.h"
 
 AdoptionTableModel::AdoptionTableModel(AdoptionList* adoptionList, QObject* parent) : QAbstractTableModel{ parent }, adoptionList{ adoptionList } { }
-AdoptionTableModel::~AdoptionTableModel() { }
 
 int AdoptionTableModel::rowCount(const QModelIndex& parent) const
 {

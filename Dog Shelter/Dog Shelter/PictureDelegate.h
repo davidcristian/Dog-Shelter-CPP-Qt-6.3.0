@@ -15,11 +15,11 @@ private:
 	AdoptionTableModel* model;
 
 	QNetworkAccessManager* networkManager;
-	std::unordered_map<QString, QPixmap> images;
+	std::unordered_map<QString, QPixmap>* images;
 
 public:
-	PictureDelegate(AdoptionTableModel* model, QWidget* parent = Q_NULLPTR);
-	~PictureDelegate();
+	PictureDelegate(AdoptionTableModel* model, std::unordered_map<QString, QPixmap>* images, QWidget* parent = Q_NULLPTR);
+	~PictureDelegate() = default;
 
 	void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
 	QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const override;
