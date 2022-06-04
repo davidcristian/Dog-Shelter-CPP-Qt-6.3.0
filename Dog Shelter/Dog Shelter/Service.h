@@ -30,7 +30,7 @@ public:
 	void clearUndoRedo();
 
 	Repository filterByBreedAndAge(const std::string& breed, const int& age);
-	Repository filterByString(const std::string& name);
+	Repository filterByString(const std::string& text);
 
 	void adopt(const Dog& dog);
 	AdoptionList* getAdoptionList() { return this->adoptionList; };

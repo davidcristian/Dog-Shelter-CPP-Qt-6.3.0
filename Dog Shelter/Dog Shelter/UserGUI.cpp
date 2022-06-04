@@ -7,7 +7,6 @@
 #include <QFormLayout>
 #include <QHeaderView>
 #include "UserGUI.h"
-#include "PictureDelegate.h"
 
 UserGUI::UserGUI(Service& serv, QWidget* modeSelector, QWidget* parent) : QWidget{ parent }, modeSelector{ modeSelector }, serv{ serv }
 {
@@ -16,6 +15,7 @@ UserGUI::UserGUI(Service& serv, QWidget* modeSelector, QWidget* parent) : QWidge
 
 	this->adopted = this->serv.getAdoptionList();
 	this->tableModel = new AdoptionTableModel{ this->adopted };
+	this->pictureDelegate = new PictureDelegate{ this->tableModel, this->images };
 
 	this->initGUI();
 	this->center();
@@ -42,7 +42,7 @@ void UserGUI::initGUI()
 
 	// left side - just the image
 	this->dogImage = new QLabel{};
-	QImage image{ IMAGE_WIDTH, IMAGE_HEIGHT, QImage::Format::Format_ARGB32 };
+	QImage image{ IMAGE_WIDTH, IMAGE_HEIGHT, QImage::Format::Format_ARGB32_Premultiplied };
 	image.fill(Qt::white);
 	this->dogImage->setPixmap(QPixmap::fromImage(image));
 	// set the selection model
@@ -94,8 +94,8 @@ void UserGUI::initGUI()
 	QWidget* buttonsWidget2 = new QWidget{};
 	QHBoxLayout* hLayout2 = new QHBoxLayout{ buttonsWidget2 };
 
-	this->showAdoptedButton = new QPushButton("Open Adoption List");
-	this->showAdoptedButton->setFont(font);
+	this->openAdoptedButton = new QPushButton("Open List");
+	this->openAdoptedButton->setFont(font);
 
 	this->changeModeButton = new QPushButton("Change Mode");
 	this->changeModeButton->setFont(font);
@@ -126,7 +126,7 @@ void UserGUI::initGUI()
 	hLayout1->addWidget(this->viewAllButton);
 	hLayout1->addWidget(this->viewFilteredButton);
 
-	hLayout2->addWidget(this->showAdoptedButton);
+	hLayout2->addWidget(this->openAdoptedButton);
 	hLayout2->addWidget(this->changeModeButton);
 
 	hLayout3->addWidget(this->undoButton);
@@ -142,7 +142,7 @@ void UserGUI::initGUI()
 	vLayout->addWidget(buttonsWidget4);
 
 	this->dogNameEdit->setEnabled(false);
-	this->showAdoptedButton->setEnabled(false);
+	this->openAdoptedButton->setEnabled(false);
 
 	this->undoButton->setEnabled(false);
 	this->redoButton->setEnabled(false);
@@ -164,7 +164,7 @@ void UserGUI::initGUI()
 	this->picturesTableView->setModel(this->tableModel);
 
 	// set the custom delegate
-	this->picturesTableView->setItemDelegate(new PictureDelegate{ this->tableModel, this->images });
+	this->picturesTableView->setItemDelegate(this->pictureDelegate);
 
 	// hide the vertical header
 	this->picturesTableView->verticalHeader()->hide();
@@ -201,8 +201,8 @@ void UserGUI::connectSignalsAndSlots()
 	// add button connections
 	QObject::connect(this->viewAllButton, &QPushButton::clicked, this, &UserGUI::viewAllDogs);
 	QObject::connect(this->viewFilteredButton, &QPushButton::clicked, this, &UserGUI::viewFilteredDogs);
-	QObject::connect(this->showAdoptedButton, &QPushButton::clicked, this, &UserGUI::showAdoptionList);
-	QObject::connect(this->changeModeButton, &QPushButton::clicked, this, &UserGUI::changeModeButtonHandler);
+	QObject::connect(this->openAdoptedButton, &QPushButton::clicked, this, &UserGUI::openAdoptionList);
+	QObject::connect(this->changeModeButton, &QPushButton::clicked, this, &UserGUI::changeMode);
 
 	QObject::connect(this->adoptButton, &QPushButton::clicked, this, &UserGUI::adoptButtonHandler);
 	QObject::connect(this->nextButton, &QPushButton::clicked, this, &UserGUI::loadNextDog);
@@ -250,7 +250,12 @@ void UserGUI::loadCurrentDog()
 	if (this->images->find(photograph) != this->images->end())
 	{
 		QPixmap pixmap = this->images->at(photograph);
-		this->dogImage->setPixmap(pixmap);
+
+		QImage image{ pixmap.toImage().convertToFormat(QImage::Format_ARGB32_Premultiplied) };
+		image = image.scaled(IMAGE_WIDTH, IMAGE_HEIGHT, Qt::AspectRatioMode::KeepAspectRatioByExpanding, Qt::TransformationMode::SmoothTransformation);
+		image = image.copy((image.width() - IMAGE_WIDTH) / 2, (image.height() - IMAGE_HEIGHT) / 2, IMAGE_WIDTH, IMAGE_HEIGHT);
+
+		this->dogImage->setPixmap(QPixmap::fromImage(image));
 	}
 	else
 	{
@@ -283,7 +288,7 @@ void UserGUI::viewFilteredDogs()
 	emit prepareAdoptionSignal();
 }
 
-void UserGUI::showAdoptionList()
+void UserGUI::openAdoptionList()
 {
 	try
 	{
@@ -295,7 +300,7 @@ void UserGUI::showAdoptionList()
 	}
 }
 
-void UserGUI::changeModeButtonHandler()
+void UserGUI::changeMode()
 {
 	this->hide();
 	this->modeSelector->show();
@@ -363,7 +368,7 @@ void UserGUI::stopShowingDogs()
 
 	this->viewAllButton->setEnabled(true);
 	this->viewFilteredButton->setEnabled(true);
-	this->showAdoptedButton->setEnabled(this->adopted->size() > 0);
+	this->openAdoptedButton->setEnabled(this->adopted->size() > 0);
 	this->changeModeButton->setEnabled(true);
 
 	//this->tabWidget->tabBar()->setEnabled(this->hasAdopted);
@@ -446,12 +451,14 @@ void UserGUI::prepareAdoption()
 		return;
 	}
 
+	this->dogsToShow.setFileName("");
+
 	this->dogBreedEdit->setEnabled(false);
 	this->dogAgeEdit->setEnabled(false);
 
 	this->viewAllButton->setEnabled(false);
 	this->viewFilteredButton->setEnabled(false);
-	this->showAdoptedButton->setEnabled(false);
+	this->openAdoptedButton->setEnabled(false);
 	this->changeModeButton->setEnabled(false);
 
 	this->undoButton->setEnabled(true);
@@ -493,30 +500,27 @@ void UserGUI::updateTable()
 
 void UserGUI::receivedReply(QNetworkReply* reply)
 {
-	QImage image{ IMAGE_WIDTH, IMAGE_HEIGHT, QImage::Format::Format_ARGB32 };
-	image.fill(Qt::black);
+	QPixmap pixmap{};
+	pixmap.fill(Qt::black);
 
 	if (reply->error() == QNetworkReply::NoError)
 	{
 		QByteArray replyData = reply->readAll();
-		image.loadFromData(replyData);
+		pixmap.loadFromData(replyData);
 
-		if (!image.isNull())
+		if (pixmap.isNull())
 		{
-			image = image.scaled(IMAGE_WIDTH, IMAGE_HEIGHT, Qt::AspectRatioMode::KeepAspectRatioByExpanding, Qt::TransformationMode::SmoothTransformation);
-			image = image.copy((image.width() - IMAGE_WIDTH) / 2, (image.height() - IMAGE_HEIGHT) / 2, IMAGE_WIDTH, IMAGE_HEIGHT);
-		}
-		else
-		{
-			image = QImage{ IMAGE_WIDTH, IMAGE_HEIGHT, QImage::Format::Format_ARGB32 };
-			image.fill(Qt::black);
+			pixmap = QPixmap{};
+			pixmap.fill(Qt::black);
 		}
 	}
 
-	QPixmap pixmap = QPixmap::fromImage(image);
-
 	this->images->operator[](reply->url().toString()) = pixmap;
-	this->dogImage->setPixmap(pixmap);
+	
+	QImage image{ pixmap.toImage().convertToFormat(QImage::Format_ARGB32_Premultiplied) };
+	image = image.scaled(IMAGE_WIDTH, IMAGE_HEIGHT, Qt::AspectRatioMode::KeepAspectRatioByExpanding, Qt::TransformationMode::SmoothTransformation);
+	image = image.copy((image.width() - IMAGE_WIDTH) / 2, (image.height() - IMAGE_HEIGHT) / 2, IMAGE_WIDTH, IMAGE_HEIGHT);
 
+	this->dogImage->setPixmap(QPixmap::fromImage(image));
 	reply->deleteLater();
 }

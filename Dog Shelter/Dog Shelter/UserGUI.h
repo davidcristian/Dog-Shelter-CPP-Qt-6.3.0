@@ -10,6 +10,7 @@
 #include <QShortcut>
 #include <unordered_map>
 #include "AdoptionTableModel.h"
+#include "PictureDelegate.h"
 #include "Service.h"
 #include "AdoptionList.h"
 #include "Action.h"
@@ -37,11 +38,11 @@ private:
 
 	Repository dogsToShow;
 	int currentIndex = -1;
-
 	AdoptionList* adopted;
 	
 	QTabWidget* tabWidget;
 	AdoptionTableModel* tableModel;
+	PictureDelegate* pictureDelegate;
 	QTableView* picturesTableView;
 
 	QLabel* dogImage;
@@ -51,7 +52,7 @@ private:
 
 	QPushButton* viewAllButton;
 	QPushButton* viewFilteredButton;
-	QPushButton* showAdoptedButton;
+	QPushButton* openAdoptedButton;
 	QPushButton* changeModeButton;
 
 	QPushButton* undoButton;
@@ -89,8 +90,8 @@ public slots:
 	
 	void viewAllDogs();
 	void viewFilteredDogs();
-	void showAdoptionList();
-	void changeModeButtonHandler();
+	void openAdoptionList();
+	void changeMode();
 
 	void undo();
 	void redo();

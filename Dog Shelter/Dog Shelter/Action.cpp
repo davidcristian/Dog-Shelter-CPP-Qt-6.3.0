@@ -40,10 +40,7 @@ ActionAdopt::ActionAdopt(const Dog& dog, Repository& repo, const int& repoIndex,
 	Repository& dogsToShow, const int& dogsToShowIndex,
 	AdoptionList* adoptionList, const int& adoptionListIndex) : adoptedDog{ dog }, repo{ repo }, repoIndex{ repoIndex },
 																dogsToShow{ dogsToShow }, dogsToShowIndex{ dogsToShowIndex },
-																adoptionList{ adoptionList }, adoptionListIndex{ adoptionListIndex }
-{
-	dogsToShow.setFileName("");
-}
+																adoptionList{ adoptionList }, adoptionListIndex{ adoptionListIndex } { }
 
 void ActionAdopt::executeUndo()
 {

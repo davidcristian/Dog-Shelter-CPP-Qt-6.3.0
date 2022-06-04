@@ -57,7 +57,7 @@ void AdminGUI::initGUI()
 	this->dogAgeEdit = new QLineEdit{};
 	this->dogPhotographEdit = new QTextEdit{};
 
-	QLabel* filterLabel = new QLabel{ "&Filter name:" };
+	QLabel* filterLabel = new QLabel{ "&Filter:" };
 	filterLabel->setBuddy(this->filterEdit);
 	QLabel* nameLabel = new QLabel{ "&Dog name:" };
 	nameLabel->setBuddy(this->dogNameEdit);
@@ -430,13 +430,6 @@ void AdminGUI::removeDog(const std::string& name, const std::string& breed)
 
 void AdminGUI::updateDog(const std::string& oldName, const std::string& oldBreed, const std::string& name, const std::string& breed, const int& age, const std::string& photograph)
 {
-	Dog dog{ name, breed, age, photograph };
-	if (this->selectedDog == dog)
-	{
-		this->showError("The dog was not modified!");
-		return;
-	}
-
 	try
 	{
 		this->serv.update(oldName, oldBreed, name, breed, age, photograph);
