@@ -91,6 +91,9 @@ QVariant AdoptionTableModel::headerData(int section, Qt::Orientation orientation
 	return QVariant{};
 }
 
+// TODO:
+// - validate single cell edit and insert
+// - check for duplicate dog on edit finish
 bool AdoptionTableModel::setData(const QModelIndex& index, const QVariant& value, int role)
 {
 	if (!index.isValid() || role != Qt::EditRole)

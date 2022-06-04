@@ -42,9 +42,9 @@ void UserGUI::initGUI()
 
 	// left side - just the image
 	this->dogImage = new QLabel{};
-	QImage image{ IMAGE_WIDTH, IMAGE_HEIGHT, QImage::Format::Format_ARGB32_Premultiplied };
-	image.fill(Qt::white);
-	this->dogImage->setPixmap(QPixmap::fromImage(image));
+	QPixmap pixmap{};
+	pixmap.fill(Qt::white);
+	this->dogImage->setPixmap(pixmap);
 	// set the selection model
 	firstTabHLayout->addWidget(this->dogImage);
 
@@ -94,7 +94,7 @@ void UserGUI::initGUI()
 	QWidget* buttonsWidget2 = new QWidget{};
 	QHBoxLayout* hLayout2 = new QHBoxLayout{ buttonsWidget2 };
 
-	this->openAdoptedButton = new QPushButton("Open List");
+	this->openAdoptedButton = new QPushButton("Open Adoption List");
 	this->openAdoptedButton->setFont(font);
 
 	this->changeModeButton = new QPushButton("Change Mode");
@@ -347,10 +347,10 @@ void UserGUI::stopShowingDogs()
 	this->currentIndex = -1;
 	this->dogsToShow.getDogs().clear();
 
-	QPixmap image{ IMAGE_WIDTH, IMAGE_HEIGHT };
-	image.fill(Qt::white);
+	QPixmap pixmap{};
+	pixmap.fill(Qt::white);
 
-	this->dogImage->setPixmap(image);
+	this->dogImage->setPixmap(pixmap);
 
 	this->dogNameEdit->clear();
 	this->dogBreedEdit->clear();

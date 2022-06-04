@@ -104,7 +104,7 @@ Repository Service::filterByBreedAndAge(const std::string& breed, const int& age
 /// <summary>
 /// Filter the dogs based on a given name
 /// </summary>
-/// <param name="name">the name to filter by</param>
+/// <param name="text">the string to filter by</param>
 /// <returns>the filtered repo</returns>
 Repository Service::filterByString(const std::string& text)
 {
@@ -112,7 +112,7 @@ Repository Service::filterByString(const std::string& text)
 
 	for (const Dog& dog : this->repo.getDogs())
 	{
-		if (dog.getName().find(text) != std::string::npos || dog.getBreed().find(text) != std::string::npos)
+		if (dog.getName().find(text) != std::string::npos) // || dog.getBreed().find(text) != std::string::npos)
 			newRepo.add(dog);
 	}
 
